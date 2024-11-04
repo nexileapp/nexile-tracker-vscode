@@ -1,0 +1,88 @@
+{
+  "name": "nexile-tracker-vscode",
+  "displayName": "Nexile Tracker (VS Code)",
+  "description": "Track your coding time and activity in VS Code with the Nexile desktop app integration. Get detailed insights into your development productivity and project time allocation.",
+  "version": "1.0.0",
+  "publisher": "nexile",
+  "author": {
+    "name": "Nexile",
+    "url": "https://nexile.app"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "productivity",
+    "time-tracking",
+    "activity-monitoring",
+    "project-management"
+  ],
+  "icon": "resources/icon.png",
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": [
+      {
+        "title": "Nexile App",
+        "properties": {
+          "nexile-tracker.dashboardUrl": {
+            "type": "string",
+            "default": "https://nexile.app/dashboard"
+          }
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "nexile-tracker.openDashboard",
+        "title": "Nexile Tracker: Open Dashboard"
+      },
+      {
+        "command": "nexile-tracker.toggleEnable",
+        "title": "Nexile Tracker: Toggle Enable/Disable"
+      },
+      {
+        "command": "nexile-tracker.toggleWorkspace",
+        "title": "Nexile Tracker: Toggle Enable/Disable for Current Workspace"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./ - --allow-star-activation",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "package": "vsce package --allow-star-activation"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.9",
+    "@types/node": "20.x",
+    "@types/sinon": "^17.0.3",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.13.0",
+    "glob": "^11.0.0",
+    "mocha": "^10.8.2",
+    "sinon": "^19.0.2",
+    "typescript": "^5.6.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nexile/nexile-tracker-vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nexile/nexile-tracker-vscode/issues"
+  },
+  "homepage": "https://nexile.app",
+  "license": "BSD-3-Clause"
+}
