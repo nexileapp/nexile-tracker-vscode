@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import { ActivityManager } from '../../activityManager';
 import { Constants } from '../../constants';
+import { ActivityTracker } from '../../activityTracker';
 
 suite('ActivityManager Test Suite', () => {
   let manager: ActivityManager;
@@ -18,7 +19,10 @@ suite('ActivityManager Test Suite', () => {
       }
     } as any;
 
-    manager = new ActivityManager(context, true, false);
+    manager = new ActivityManager(context, {
+      serverAvailable: true,
+      debugMode: true
+    } as ActivityTracker);
   });
 
   teardown(() => {

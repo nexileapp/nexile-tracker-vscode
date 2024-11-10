@@ -3,7 +3,6 @@ import { formatTime } from './utils';
 
 export class StatusBarManager {
   private statusBarItem: vscode.StatusBarItem;
-  private readonly dashboardUrl = 'https://nexile.app/dashboard';
 
   constructor() {
     this.statusBarItem = vscode.window.createStatusBarItem(

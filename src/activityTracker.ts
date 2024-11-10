@@ -7,13 +7,15 @@ import { getProjectName, md5 } from './utils';
 import { basename } from 'node:path';
 
 export class ActivityTracker {
-  private debugMode: boolean = true;
+  public debugMode: boolean = true;
   private isActive = false;
-  private serverAvailable = false;
+  public serverAvailable = false;
   private isEnabled = true;
   private disabledWorkspaces: Set<string>;
 
+  private pendingActivityUpdate: NodeJS.Timeout | null = null;
   private idleTimer: NodeJS.Timeout | null = null;
+  private inactiveTimer: NodeJS.Timeout | null = null;
   private heartbeatTimer: NodeJS.Timeout | null = null;
   private checkServerInterval: NodeJS.Timeout | null = null;
   private timeRefreshInterval: NodeJS.Timeout | null = null;
@@ -28,7 +30,7 @@ export class ActivityTracker {
     this.isEnabled = this.context.globalState.get('nexile-tracker.enabled', true);
 
     this.statusBarManager = new StatusBarManager();
-    this.activityManager = new ActivityManager(context, this.serverAvailable, this.debugMode);
+    this.activityManager = new ActivityManager(context, this);
 
     this.registerCommands();
     this.initialize();
@@ -126,6 +128,7 @@ export class ActivityTracker {
 
       return this.serverAvailable;
     } catch (error) {
+      console.log('Failed to ping server:', error);
       this.serverAvailable = false;
       this.showServerError();
       return false;
@@ -141,7 +144,7 @@ export class ActivityTracker {
       if (selection === openSettings) {
         vscode.commands.executeCommand('workbench.action.openSettings', 'nexile-tracker');
       } else if (selection === downloadApp) {
-        vscode.env.openExternal(vscode.Uri.parse('https://nexile.app/desktop'));
+        vscode.env.openExternal(vscode.Uri.parse(Constants.DASHBOARD_URL));
       }
     });
   }
@@ -160,14 +163,19 @@ export class ActivityTracker {
   }
 
   private async startTracking() {
-    // Track document saves (major activity)
+    // Track document saves
     vscode.workspace.onDidSaveTextDocument(() => {
-      this.activityManager.updateLastMajorActivityTime();
+      this.resetInactiveTimer();
+
       this.trackActivity();
     });
 
     // Track active editor changes
-    vscode.window.onDidChangeActiveTextEditor(() => this.trackActivity());
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      this.resetInactiveTimer();
+
+      this.trackActivity();
+    });
 
     // Track cursor movement/selection
     vscode.window.activeTextEditor?.document && vscode.window.onDidChangeTextEditorSelection(() => {
@@ -209,6 +217,16 @@ export class ActivityTracker {
     }
   }
 
+  private resetInactiveTimer() {
+    if (this.inactiveTimer) {
+      clearTimeout(this.inactiveTimer);
+    }
+
+    this.inactiveTimer = setTimeout(() => {
+      this.activityManager.finishActivity();
+    }, Constants.INACTIVE_TIMEOUT);
+  }
+
   private async trackActivity() {
     if (!this.serverAvailable || !this.isEnabled || !this.isWorkspaceEnabled()) {
       console.log('Skipping activity tracking', {
@@ -226,30 +244,38 @@ export class ActivityTracker {
     }
 
     this.resetIdleTimer();
+    this.resetInactiveTimer();
 
-    if (await this.activityManager.shouldCreateNewActivity()) {
-      await this.activityManager.createActivity(editor);
-    } else if (this.activityManager.getCurrentActivityId()) {
-      const document = editor.document;
-      const devActivity = this.activityManager.debugSession ? 'debugging' : 'coding';
-
-      const updateRequest: UpdateActivityRequest = {
-        updateEnd: true,
-        status: 'RUNNING',
-        metadata: {
-          title: basename(document.fileName),
-          location: `${document.fileName}:${editor.selection.active.line + 1}`,
-          hash: md5(`${getProjectName()}:${document.fileName}`),
-          extra: {
-            activity: devActivity,
-            file: basename(document.fileName),
-            language: document.languageId,
-          }
-        }
-      };
-
-      await this.activityManager.updateActivity(updateRequest);
+    if (this.pendingActivityUpdate) {
+      clearTimeout(this.pendingActivityUpdate);
     }
+
+    this.pendingActivityUpdate = setTimeout(async () => {
+      if (await this.activityManager.shouldCreateNewActivity()) {
+        await this.activityManager.createActivity(editor);
+      } else if (this.activityManager.getCurrentActivityId()) {
+        const document = editor.document;
+        const devActivity = this.activityManager.debugSession ? 'debugging' : 'coding';
+
+        const updateRequest: UpdateActivityRequest = {
+          updateEnd: true,
+          status: 'RUNNING',
+          metadata: {
+            title: basename(document.fileName),
+            location: `${document.fileName}:${editor.selection.active.line + 1}`,
+            hash: md5(`${getProjectName()}:${document.fileName}`),
+            extra: {
+              activity: devActivity,
+              file: basename(document.fileName),
+              language: document.languageId,
+            }
+          }
+        };
+
+        await this.activityManager.updateActivity(updateRequest);
+      }
+      this.pendingActivityUpdate = null;
+    }, 300); // 300ms debounce delay
   }
 
   private setupHeartbeat() {
@@ -328,18 +354,31 @@ export class ActivityTracker {
 
   async dispose() {
     try {
+      if (this.pendingActivityUpdate) {
+        clearTimeout(this.pendingActivityUpdate);
+        this.pendingActivityUpdate = null;
+      }
+
       if (this.idleTimer) {
         clearTimeout(this.idleTimer);
         this.idleTimer = null;
       }
+
+      if (this.inactiveTimer) {
+        clearTimeout(this.inactiveTimer);
+        this.inactiveTimer = null;
+      }
+
       if (this.heartbeatTimer) {
         clearInterval(this.heartbeatTimer);
         this.heartbeatTimer = null;
       }
+
       if (this.checkServerInterval) {
         clearInterval(this.checkServerInterval);
         this.checkServerInterval = null;
       }
+
       if (this.timeRefreshInterval) {
         clearInterval(this.timeRefreshInterval);
         this.timeRefreshInterval = null;

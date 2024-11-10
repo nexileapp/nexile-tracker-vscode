@@ -4,22 +4,22 @@ import { basename } from 'path';
 import { Constants } from './constants';
 import { CreateActivityRequest, UpdateActivityRequest } from './types';
 import { md5, getProjectName } from './utils';
+import { ActivityTracker } from './activityTracker';
 
 export class ActivityManager {
   private creatingActivity: boolean = false;
+  private updateInProgress: boolean = false;
   private currentActivityId: string | null = null;
   private lastActivity: CreateActivityRequest | null = null;
-  private lastMajorActivityTime: number = Date.now();
   public debugSession: vscode.DebugSession | null = null;
 
   constructor(
     private context: vscode.ExtensionContext,
-    private serverAvailable: boolean,
-    private debugMode: boolean = Constants.DEBUG
+    private activityTracker: ActivityTracker,
   ) { }
 
   private debugLog(message: string, data?: any) {
-    if (this.debugMode) {
+    if (this.activityTracker.debugMode) {
       const timestamp = new Date().toISOString();
       const logMessage = `[Nexile Debug ${timestamp}] ${message}`;
       console.log(logMessage);
@@ -33,12 +33,6 @@ export class ActivityManager {
     if (this.creatingActivity) return false;
     if (!this.currentActivityId) return true;
     if (!this.lastActivity) return true;
-
-    const timeSinceLastMajor = Date.now() - this.lastMajorActivityTime;
-    if (timeSinceLastMajor > Constants.MAJOR_ACTIVITY_THRESHOLD) {
-      await this.finishActivity();
-      return true;
-    }
 
     const currentProject = getProjectName();
     return currentProject !== this.lastActivity.applicationProjectName;
@@ -80,15 +74,21 @@ export class ActivityManager {
   }
 
   async updateActivity(request: UpdateActivityRequest) {
-    if (!this.serverAvailable || !this.currentActivityId) {
+    if (!this.activityTracker.serverAvailable || !this.currentActivityId) {
       this.debugLog('Cannot update activity', {
-        reason: !this.serverAvailable ? 'server unavailable' : 'no current activity',
+        reason: !this.activityTracker.serverAvailable ? 'server unavailable' : 'no current activity',
         activityId: this.currentActivityId
       });
       return;
     }
 
+    if (this.updateInProgress) {
+      this.debugLog('Update already in progress, skipping');
+      return;
+    }
+
     try {
+      this.updateInProgress = true;
       this.debugLog('Sending activity update request', {
         activityId: this.currentActivityId,
         request
@@ -112,21 +112,21 @@ export class ActivityManager {
       this.debugLog('Activity update successful');
 
       if (request.status === 'FINISHED') {
-        this.currentActivityId = null;
-        this.lastActivity = null;
         this.debugLog('Activity finished and cleared');
       }
 
       return await response.json();
     } catch (error: any) {
       this.debugLog('Failed to update activity', { error: error.message });
+    } finally {
+      this.updateInProgress = false;
     }
 
     return undefined;
   }
 
   private async sendActivityRequest(request: CreateActivityRequest) {
-    if (!this.serverAvailable) {
+    if (!this.activityTracker.serverAvailable) {
       this.debugLog('Cannot send activity request: server unavailable');
       return;
     }
@@ -172,10 +172,6 @@ export class ActivityManager {
 
   setDebugSession(session: vscode.DebugSession | null) {
     this.debugSession = session;
-  }
-
-  updateLastMajorActivityTime() {
-    this.lastMajorActivityTime = Date.now();
   }
 
   getCurrentActivityId() {

@@ -2,9 +2,6 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import { ActivityTracker } from '../../activityTracker';
-import { ActivityManager } from '../../activityManager';
-import { StatusBarManager } from '../../statusBar';
-import { Constants } from '../../constants';
 import * as utils from '../../utils';
 
 suite('ActivityTracker Test Suite', () => {

@@ -3,7 +3,7 @@ export const Constants = {
   DASHBOARD_URL: 'https://nexile.app/dashboard',
   IDLE_TIMEOUT: 2.5 * 60 * 1000, // 2.5 minutes
   HEARTBEAT_INTERVAL: 60 * 1000, // 60 seconds
-  MAJOR_ACTIVITY_THRESHOLD: 15 * 60 * 1000, // 15 minutes
+  INACTIVE_TIMEOUT: 15 * 60 * 1000, // 15 minutes
   TIME_REFRESH_INTERVAL: 30 * 1000, // 30 seconds
-  DEBUG: false
+  DEBUG: true
 };

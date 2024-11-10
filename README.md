@@ -55,19 +55,6 @@ This extension contributes the following settings:
    - Ensure you're not in an ignored workspace
    - Verify VS Code has focus
 
-## Release Notes
-
-### 1.0.0
-
-Initial release of Nexile Tracker for VS Code:
-
-- Automatic time tracking
-- Desktop app integration
-- Project-based tracking
-- Activity detection
-- Status bar integration
-- Command palette integration
-
 ## Support
 
 Need help? Visit our [support page](https://nexile.app/support) or contact us at support@nexile.app.
