@@ -81,7 +81,14 @@ suite('ActivityManager Test Suite', () => {
     assert.strictEqual(
       updateStub.calledWith({
         updateEnd: true,
-        status: 'FINISHED'
+        status: 'FINISHED',
+        metadata: {
+          title: 'Finished',
+          hash: 'a5d7ceb2c59b8cee46c2953fec9abc19',
+          extra: {
+            activity: 'finished'
+          }
+        }
       }),
       true
     );

@@ -2,7 +2,7 @@
   "name": "nexile-tracker-vscode",
   "displayName": "Nexile Tracker (VS Code)",
   "description": "Track your coding time and activity in VS Code with the Nexile desktop app integration. Get detailed insights into your development productivity and project time allocation.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "nexile",
   "author": {
     "name": "Nexile",
@@ -60,7 +60,7 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "package": "vsce package --allow-star-activation",
-    "install-extension": "code-insiders --install-extension ./nexile-tracker-vscode-1.0.2.vsix"
+    "install-extension": "code-insiders --install-extension ./nexile-tracker-vscode-1.0.3.vsix"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.9",

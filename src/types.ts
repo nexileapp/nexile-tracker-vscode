@@ -32,3 +32,10 @@ export interface ProjectTime {
   seconds: number;
   lastUpdate: number;
 }
+
+export interface Config {
+  heartbeatInterval: number;
+  timeRefreshInterval: number;
+  idleTimeout: number;
+  inactiveTimeout: number;
+}

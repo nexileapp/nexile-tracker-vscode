@@ -98,7 +98,7 @@ export class ActivityManager {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-Client-Type': 'vscode-extension',
+          'X-Client-Type': 'vscode',
           'X-Client-Version': this.context.extension.packageJSON.version
         },
         body: JSON.stringify(request)
@@ -136,7 +136,7 @@ export class ActivityManager {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Client-Type': 'vscode-extension',
+          'X-Client-Type': 'vscode',
           'X-Client-Version': this.context.extension.packageJSON.version
         },
         body: JSON.stringify(request)
@@ -161,7 +161,14 @@ export class ActivityManager {
     if (this.currentActivityId) {
       const updateRequest: UpdateActivityRequest = {
         updateEnd: true,
-        status: 'FINISHED'
+        status: 'FINISHED',
+        metadata: {
+          title: 'Finished',
+          hash: md5('finished'),
+          extra: {
+            activity: 'finished'
+          }
+        }
       };
 
       await this.updateActivity(updateRequest);

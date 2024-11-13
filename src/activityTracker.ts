@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Constants } from './constants';
 import { StatusBarManager } from './statusBar';
 import { ActivityManager } from './activityManager';
-import { UpdateActivityRequest, ProjectTime } from './types';
+import { UpdateActivityRequest, ProjectTime, Config } from './types';
 import { getProjectName, md5 } from './utils';
 import { basename } from 'node:path';
 
@@ -10,6 +10,7 @@ export class ActivityTracker {
   public debugMode: boolean = true;
   private isActive = false;
   public serverAvailable = false;
+  public config: Config | null = null;
   private isEnabled = true;
   private disabledWorkspaces: Set<string>;
 
@@ -102,7 +103,7 @@ export class ActivityTracker {
       if (this.serverAvailable && this.isEnabled && this.isWorkspaceEnabled()) {
         this.updateTime();
       }
-    }, Constants.TIME_REFRESH_INTERVAL);
+    }, this.config ? this.config.timeRefreshInterval : Constants.TIME_REFRESH_INTERVAL);
   }
 
   private async checkServer(): Promise<boolean> {
@@ -110,13 +111,17 @@ export class ActivityTracker {
       const response = await fetch(`${Constants.SERVER_URL}/ping`, {
         method: 'GET',
         headers: {
-          'X-Client-Type': 'vscode-extension',
+          'X-Client-Type': 'vscode',
           'X-Client-Version': this.context.extension.packageJSON.version
         }
       });
 
       const wasAvailable = this.serverAvailable;
       this.serverAvailable = response.ok;
+
+      if (response.ok) {
+        this.config = await response.json() as Config;
+      }
 
       if (!wasAvailable && this.serverAvailable) {
         this.startTracking();
@@ -210,7 +215,7 @@ export class ActivityTracker {
 
     this.idleTimer = setTimeout(() => {
       this.handleIdle();
-    }, Constants.IDLE_TIMEOUT);
+    }, this.config ? this.config.idleTimeout : Constants.IDLE_TIMEOUT);
 
     if (wasIdle) {
       this.trackActivity();
@@ -224,7 +229,7 @@ export class ActivityTracker {
 
     this.inactiveTimer = setTimeout(() => {
       this.activityManager.finishActivity();
-    }, Constants.INACTIVE_TIMEOUT);
+    }, this.config ? this.config.inactiveTimeout : Constants.INACTIVE_TIMEOUT);
   }
 
   private async trackActivity() {
@@ -287,7 +292,7 @@ export class ActivityTracker {
       if (this.isActive && this.serverAvailable && this.activityManager.getCurrentActivityId()) {
         this.sendHeartbeat();
       }
-    }, Constants.HEARTBEAT_INTERVAL);
+    }, this.config ? this.config.heartbeatInterval : Constants.HEARTBEAT_INTERVAL);
   }
 
   private async sendHeartbeat() {
@@ -336,7 +341,7 @@ export class ActivityTracker {
         `${Constants.SERVER_URL}/time`,
         {
           headers: {
-            'X-Client-Type': 'vscode-extension',
+            'X-Client-Type': 'vscode',
             'X-Client-Version': this.context.extension.packageJSON.version
           }
         }

@@ -89,7 +89,12 @@ suite('ActivityTracker Test Suite', () => {
   test('Should handle server availability changes', async () => {
     // First check with server available
     fetchStub.resetBehavior();
-    fetchStub.callsFake(async () => new Response(null, { status: 200 }));
+    fetchStub.callsFake(async () => new Response(JSON.stringify({
+      "heartbeatInterval": 60000,
+      "idleTimeout": 300000,
+      "inactiveTimeout": 900000,
+      "timeRefreshInterval": 60000
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
     await tracker['checkServer']();
     assert.strictEqual(tracker['serverAvailable'], true, 'Server should be available on first check');
 

@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.0.3] - 2024-11-13
+
+### Features
+
+- Added remote configuration support
+
+### Fixed
+
+- Improved metadata for FINISHED events
+
 ## [1.0.2] - 2024-11-10
 
 ### Fixed
