@@ -13,6 +13,7 @@ export class ActivityTracker {
   public config: Config | null = null;
   private isEnabled = true;
   private disabledWorkspaces: Set<string>;
+  private showedServerError = false;
 
   private pendingActivityUpdate: NodeJS.Timeout | null = null;
   private idleTimer: NodeJS.Timeout | null = null;
@@ -124,6 +125,7 @@ export class ActivityTracker {
       }
 
       if (!wasAvailable && this.serverAvailable) {
+        this.showedServerError = false;
         this.startTracking();
       } else if (wasAvailable && !this.serverAvailable) {
         this.showServerError();
@@ -141,9 +143,13 @@ export class ActivityTracker {
   }
 
   private showServerError() {
+    if (this.showedServerError) return;
+
     const message = 'Nexile Tracker Desktop app must be running to track activity';
     const openSettings = 'Open Settings';
     const downloadApp = 'Download App';
+
+    this.showedServerError = true;
 
     vscode.window.showErrorMessage(message, openSettings, downloadApp).then(selection => {
       if (selection === openSettings) {

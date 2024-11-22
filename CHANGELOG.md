@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.0.4] - 2024-11-22
+
+### Fixed
+
+- Fixed alert spamming when Desktop App is not running
+
 ## [1.0.3] - 2024-11-13
 
 ### Features
